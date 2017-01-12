@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<meta name="viewport" content="initial-scale = 1.0" />
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/p5.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.sound.js" type="text/javascript"></script>
+    <script src="https://www.gstatic.com/firebasejs/3.6.4/firebase.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <!-- <script src="https://rawgit.com/343N/raintest-mp/master/lightning.js" type="text/javascript"></script>
+    <script src="https://rawgit.com/343N/raintest-mp/master/splash.js" type="text/javascript"></script>
+    <script src="https://rawgit.com/343N/raintest-mp/master/raindrop.js" type="text/javascript"></script>
+    <script src="https://rawgit.com/343N/raintest-mp/master/block.js" type="text/javascript"></script>
+    <script src="https://rawgit.com/343N/raintest-mp/master/canvas.js" type="text/javascript"></script> -->
+    <!-- <script src="lightning.js" type="text/javascript"></script>
+    <script src="splash.js" type="text/javascript"></script>
+    <script src="raindrop.js" type="text/javascript"></script>
+    <script src="block.js" type="text/javascript"></script> -->
+    <script src="drawing.js" type="text/javascript"></script>
+    <script src="player.js" type="text/javascript"></script>
+    <script src="canvas.js" type="text/javascript"></script>
+    <style>
+        body {
+            margin: 0px;
+            overflow-y: hidden;
+            /*overflow-y:*/
+            /*position: relative;*/
+            padding: 0px;
+            border: 0px;
+            font-family: sans-serif;
+            background-color: rgba(200, 200, 200, 1);
+        }
+
+        canvas {
+            position: absolute;
+            outline: solid 1px black;
+            /*border: solid 2px black;*/
+            left: 20%;
+            height: 100%;
+            width: 60%;
+            /*cursor: */
+            /*border-top: solid 2px black;*/
+        }
+
+        #renderModeSelect {
+          position: absolute;
+          left: 0;
+          top: 95%;
+          width: 100%;
+          height: 5%;
+          /*margin-top: 2.5%;*/
+          align-content: center;
+          text-align: center;
+          font-weight: normal;
+
+        }
+        #renderModeSelect:hover {
+          font-weight: bold;
+          cursor:pointer;
+        }
+
+        #colorSelector{
+          position: absolute;
+          top: 90%;
+          margin-bottom: 5%;
+          height: 50px;
+          width: 10%;
+          left: 45%;
+        }
+
+        input {
+          border: 0;
+          background-color: rgba(0,0,0,0);
+          /*width: 100%;*/
+        }
+        #nameInput {
+          background-color: #424242;
+          position: absolute;
+          width: 25%;
+          height: 5%;
+          color: white;
+          font-size: 16px;
+          text-align: center;
+          outline: solid 3px black;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+        }
+
+        #leftDiv {
+            background-color: rgba(180, 180, 180, 1);
+            position: absolute;
+            left: 0%;
+            width: 20%;
+            height: 100%;
+        }
+
+        #rightDiv {
+            background-color: rgba(180, 180, 180, 1);
+            position: absolute;
+            left: 80%;
+            width: 20%;
+            height: 100%;
+        }
+
+        .title {
+            font-size: 24px;
+            position: relative;
+            text-align: center;
+            align-self: center;
+            float: left;
+            align-content: center;
+            /*padding: 5%;*/
+            width: 90%;
+            height: 5%;
+            margin-top: 5%;
+            /*transform: translateY(-50%);*/
+            /*line-height: 250%;*/
+            font-weight: bold;
+        }
+
+        .playerEntry {
+          position: relative;
+          width: 90%;
+          padding: 5%;
+          text-align: center;
+          word-wrap: break-word;
+          overflow-x: hidden;
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          overflow-y: hidden;
+          /*background-color: #BDBDBD;*/
+          /*font-size: 1.5vw;*/
+          height: auto;
+          margin-top: 5%;
+          margin-bottom: 5%;
+
+        }
+
+        .chatName {
+          color: rgba(230,230,230,1);
+          /*font-size: 1.25vw;*/
+        }
+
+        #chatInput {
+          padding: 5%;
+          height: auto;
+          width: 80%;
+          top: 2.5%;
+          margin: 0;
+          /*left: 5%;*/
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          left: 10%;
+          float: left;
+          color: white;
+
+          background-color: rgba(20,20,20,1);
+          transition: all .25s;
+          /*margin-top: 2.5%;*/
+          position: relative;
+
+        }
+        #chatInput:focus {
+          background-color: #424242;
+        }
+
+        #chatHistory {
+          height: 80%;
+          position: relative;
+          background-color: #424242;
+          width: 80%;
+          left: 10%;
+          padding: 5%;
+          margin: 0;
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          color: white;
+          outline: solid 1px black;
+          float: left;
+          border: none;
+          /*font-size: 1vw;*/
+          word-wrap: break-word;
+          overflow-y: hidden;
+          overflow-x: none;
+        }
+
+
+
+        #timer{
+          position: absolute;
+          left: 50%;
+          top: 0;
+          height: auto;
+          width: 75%;
+          text-align: center;
+          background-color: rgba(0,0,0,0);
+          color: black;
+          /*font-size: 2vw;*/
+          transform: translateX(-50%);
+        }
+
+
+        #menuDiv{
+          height:
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div id="leftDiv">
+        <div class="title">Players</div>
+    </div>
+
+    <div id="rightDiv">
+        <div class="title">Chat</div>
+        <!-- <div id="chatBar"> -->
+        <div id="chatHistory"></div>
+        <input id="chatInput">
+    </div>
+
+    <div id="menuDiv">
+
+    </div>
+
+</body>
+
+</html>
