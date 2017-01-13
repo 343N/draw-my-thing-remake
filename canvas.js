@@ -61,6 +61,11 @@ function setup() {
         updatePlayerList();
     });
 
+
+    socket.on('pushAlert', function(data){
+      new Alert(data.msg, data.bg, data.fg)
+    });
+
     socket.on('disconnect', function(data) {
         players = [];
         updatePlayerList();
@@ -72,6 +77,7 @@ function setup() {
 
     socket.on('addPlayer', function(data) {
         players.push(data);
+        new Alert(data.name + " has joined the game!")
         updatePlayerList();
     })
 
@@ -91,11 +97,13 @@ function setup() {
     })
 
     socket.on('guesserWord', function(data) {
-        addToChat(`<span style="color: rgba(255,150,150,1);">New Word!<br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long.</span><br><br>");
+        new Alert(`New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long");
+        addToChat(`New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long<BR><BR>")
     });
 
     socket.on('drawerWord', function(data) {
-        addToChat(`<span style="color: rgba(150,255,150,1);">New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span><br><br>");
+        new Alert(`New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span>");
+        addToChat(`New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span><BR><BR>");
     })
 
     socket.on('joinGame', function(data) {
@@ -143,7 +151,8 @@ function setup() {
     });
 
     socket.on('correctGuess', function(data) {
-        addToChat('<span style="font-weight: bold">Correct! The word was ' + data + "!</span><br><br>");
+        // addToChat('<span style="font-weight: bold">Correct! The word was ' + data + "!</span><br><br>");
+        new Alert('Correct! The word was ' + data + '!');
     })
 
     socket.on('chatTooLong', function() {

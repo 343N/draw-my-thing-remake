@@ -16,6 +16,7 @@
     <script src="splash.js" type="text/javascript"></script>
     <script src="raindrop.js" type="text/javascript"></script>
     <script src="block.js" type="text/javascript"></script> -->
+    <script src="alert.js" type="text/javascript"></script>
     <script src="drawing.js" type="text/javascript"></script>
     <script src="player.js" type="text/javascript"></script>
     <script src="canvas.js" type="text/javascript"></script>
@@ -40,6 +41,18 @@
             width: 60%;
             /*cursor: */
             /*border-top: solid 2px black;*/
+        }
+
+        .alert {
+          height: auto;
+          position: absolute;
+          top: -10%;
+          outline: 2px solid rgba(0,0,0,0.2);
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 16px;
+          text-align: center;
+
         }
 
         #renderModeSelect {
