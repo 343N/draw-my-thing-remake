@@ -4,7 +4,6 @@ function Alert(msg, bg, fg) {
     this.bg = bg || "#424242";
     this.fg = fg || "#FFFFFF";
     this.id = Math.floor(random(1000));
-    var that = this;
 
 
     // this.height = 64;
@@ -31,17 +30,17 @@ function Alert(msg, bg, fg) {
         console.log('entering page');
         // console.log(leavePage);
         // console.log(this.id);
-        setTimeout(leavePage, 3000, this.id);
+        setTimeout(leavePage, 4000, this.id);
     });
 
     function leavePage(id){
       jq = $('#' + id);
-      p5dom = select('#' + id);
+      // p5dom = select('#' + id);
       jq.animate({
             left: "20%",
             opacity: 0
         }, 500, 'swing', function() {
-            p5dom.remove();
+            jq.remove();
         });
     }
 

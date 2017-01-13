@@ -83,7 +83,7 @@ function setup() {
     })
 
     socket.on('removePlayer', function(data) {
-        console.log(data);
+        // console.log(data);
         for (var i = 0; i < players.length; i++) {
             if (data === players[i].id) {
                 players.splice(i, 1);
@@ -98,27 +98,23 @@ function setup() {
     })
 
     socket.on('guesserWord', function(data) {
-        new Alert(`New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long", "#B71C1C");
-        addToChat(`<span style="color: rgba(255,128,128,1)">New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long<BR><BR></span>")
-        players.forEach(function(e){
-          e.correctlyGuessed = false;
-        });
+        new Alert(`Round ` + data.count + `!<br>Your word to guess is <span style="font-weight: bold;">` + data.length + "</span> letters long", "#B71C1C");
+        addToChat(`Round ` + data.count + `!<span style="color: rgba(255,128,128,1)"><br>Your word to guess is <span style="font-weight: bold;">` + data.length + "</span> letters long<BR><BR></span>")
+        removeGuesses();
         updatePlayerList();
     });
 
     socket.on('drawerWord', function(data) {
-        new Alert(`New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span>", "#1B5E20");
-        addToChat(`<span style="color: rgba(128,255,128,1)">New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span><BR><BR></span>");
-        players.forEach(function(e){
-          e.correctlyGuessed = false;
-        });
+        new Alert(`Round ` + data.count + `!<br>Your word to draw is <span style="font-weight: bold;">` + data.word + ".</span>", "#1B5E20");
+        addToChat(`Round ` + data.count + `!<span style="color: rgba(128,255,128,1)"><br>Your word to draw is <span style="font-weight: bold;">` + data.word + ".</span><BR><BR></span>");
+        removeGuesses();
         updatePlayerList();
     })
 
     socket.on('joinGame', function(data) {
         // background(200);
         me = new Player(data, socket.id);
-        console.log('added ' + me);
+        // console.log('added ' + me);
         socket.emit('addPlayer', me);
         players.push(me);
         joinedGame = true;
@@ -142,13 +138,15 @@ function setup() {
         updatePlayerList();
     });
 
+    socket.on('removeGuesses', removeGuesses);
+
 
     socket.on('joinFailed', function(data) {
         nameInput.value('Name must be less than 30 characters.');
     });
 
     socket.on('undoDrawing', function() {
-        console.log('msg recieved');
+        // console.log('msg recieved');
         undoDrawing();
     });
 
@@ -162,13 +160,14 @@ function setup() {
     socket.on('correctGuess', function(data) {
         // addToChat('<span style="font-weight: bold">Correct! The word was ' + data + "!</span><br><br>");
         new Alert('Correct! The word was <span style="font-weight: bold">' + data + '</span>!');
+        me.correctlyGuessed = true;
 
         // updatePlayerList();
     })
 
     socket.on('updateScoreboard', function(data){
       var p = idPlayer(data.id);
-      console.log(data);
+      // console.log(data);
       p.score = data.score;
       p.correctlyGuessed = data.correctlyGuessed;
       updatePlayerList();
@@ -183,7 +182,7 @@ function setup() {
         data.y = data.y * (height / data.h);
         currentDrawing.addPoint(data);
         // currentDrawing.show();
-        console.log('data recieved');
+        // console.log('data recieved');
     })
 
 
@@ -196,9 +195,14 @@ function clearDrawing() {
     currentDrawing.clear();
 }
 
-function showUndoButton() {
-
+function removeGuesses() {
+    players.forEach(function(e){
+      e.correctlyGuessed = false;
+    });
+    me.correctlyGuessed = false;
 }
+
+
 
 function mousePressed() {
     startDrawing();
@@ -208,6 +212,7 @@ function mouseDragged() {
     continueDrawing();
     return false;
 }
+
 
 function mouseReleased() {
     endDrawing();
@@ -219,11 +224,11 @@ function mouseReleased() {
 // }
 
 function undoDrawing() {
-    console.log(currentDrawing.drawing.length);
+    // console.log(currentDrawing.drawing.length);
     for (var i = currentDrawing.drawing.length - 1; i >= 0; i--) {
         // console.log('looking for beginning at latest ' + i);
         if (currentDrawing.drawing[i].begin) {
-            console.log(i);
+            // console.log(i);
             // console.log(j);
             for (var j = currentDrawing.drawing.length - 1; j >= i; j--) {
                 currentDrawing.drawing.splice(j, 1);
@@ -252,7 +257,9 @@ function startDrawing() {
             w: width,
             h: height,
             begin: true,
-            col: col,
+            r: col.levels[0],
+            g: col.levels[1],
+            b: col.levels[2],
             end: false,
             player: me
         }
@@ -285,12 +292,13 @@ function continueDrawing() {
             w: width,
             h: height,
             begin: false,
-            col: col,
+            r: col.levels[0],
+            g: col.levels[1],
+            b: col.levels[2],
             end: false,
             player: me
         }
         // console.log(json + " is all the drawing data");
-        console.log('begun drawing');
         currentDrawing.addPoint(json);
         socket.emit('addToDrawing', json);
         // currentDrawing.show();
@@ -311,12 +319,13 @@ function endDrawing() {
             w: width,
             h: height,
             begin: false,
-            col: col,
+            r: col.levels[0],
+            g: col.levels[1],
+            b: col.levels[2],
             end: true,
             player: me
         }
         currentDrawing.addPoint(json);
-        console.log(json + " is all the drawing data");
         socket.emit('addToDrawing', json);
         // console.log('added ellipse at ' + mouseX + ", " + mouseY);
     }
@@ -353,9 +362,6 @@ function updatePlayerList() {
         if (e.correctlyGuessed) {
           p.style('color', 'rgba(0,0,128,1)');
           p.style('font-weight', 'bold');
-          p.mouseClicked(function() {
-            socket.emit('undoDrawing');
-          })
         }
         if (e.isDrawing) {
             p.style('color', 'rgba(0,128,0,1)');
@@ -419,7 +425,7 @@ function draw() {
 
 
 function windowResized() {
-    console.log('width: ' + width + ' height: ' + height + "\nwinW: " + (windowWidth * .6) + " winH: " + windowHeight);
+    // console.log('width: ' + width + ' height: ' + height + "\nwinW: " + (windowWidth * .6) + " winH: " + windowHeight);
     currentDrawing.rescale(((windowWidth * .6) / width), (windowHeight / height));
     resizeCanvas(windowWidth * .6, windowHeight);
     // currentDrawing.drawing = [];

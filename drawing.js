@@ -12,20 +12,13 @@ function Drawing() {
     this.d = 10;
 
     this.addPoint = function(json) {
-        // console.log(json);
-        // print(json);
         var length = this.drawing.length;
+        var prevObj = this.drawing[length - 1];
         strokeWeight(10);
-        if (json.col){
-          stroke(json.col.levels[0], json.col.levels[1], json.col.levels[2]);
-        }
-        // stroke(0);
-        // console.log(json);
-        // alert('adding point!');
-        if (!json.begin && this.drawing.length > 0){
-
-          line(this.drawing[length - 1].x, this.drawing[length - 1].y, json.x, json.y);
-
+        stroke(json.r, json.g, json.b);
+        noFill();
+        if (!json.begin && this.drawing.length > 0) {
+            line(prevObj.x, prevObj.y, json.x, json.y);
         }
         this.drawing.push(json);
 
@@ -40,20 +33,17 @@ function Drawing() {
 
         background(200);
         for (var i = 0; i < this.drawing.length; i++) {
-                noFill();
-                strokeWeight(10);
-                stroke(0);
-                var length = this.drawing.length;
-                var obj = this.drawing[i-1];
-                var obj2 = this.drawing[i]
-                stroke(this.drawing[i].col.levels[0], this.drawing[i].col.levels[1], this.drawing[i].col.levels[2]);
-                if (!this.drawing[i].begin){
-                  line(obj.x, obj.y, obj2.x, obj2.y);
-                }
-
-
+            var obj = this.drawing[i];
+            var prevObj = this.drawing[i - 1];
+            noFill();
+            strokeWeight(10);
+            stroke(obj.r, obj.g, obj.b);
+            if (!obj.begin) {
+                line(prevObj.x, prevObj.y, obj.x, obj.y);
             }
+        }
     }
+
 
     this.rescale = function(w, h) {
         for (var i = 0; i < this.drawing.length; i++) {
