@@ -29,8 +29,6 @@ function Drawing() {
 
     this.show = function() {
         // noStroke();
-
-
         background(200);
         for (var i = 0; i < this.drawing.length; i++) {
             var obj = this.drawing[i];
@@ -38,7 +36,13 @@ function Drawing() {
             noFill();
             strokeWeight(10);
             stroke(obj.r, obj.g, obj.b);
+            // console.log(obj);
+            // console.log(prevObj);
+            if (obj.begin) console.log(`new line!`);
             if (!obj.begin) {
+                // console.log(obj);
+                // console.log(prevObj);
+                // console.log('line from ' + prevObj.x + " - " + prevObj.y + "\n" + "to " + obj.x + " - " + obj.y);
                 line(prevObj.x, prevObj.y, obj.x, obj.y);
             }
         }

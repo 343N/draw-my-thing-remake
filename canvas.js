@@ -4,25 +4,34 @@ var joinedGame = false;
 var players = [];
 var renderMode;
 var me;
-var nameInput, timer, renderModeSelect;
+var nameInput, timer, renderModeSelect, undoButton, wordDiv;
 var colorSelector;
 var currentDrawing;
+var undoState = false;
+
 
 function setup() {
     // devicePixelScaling(false);
     currentDrawing = new Drawing();
     cc = createCanvas(P2D);
-    resizeCanvas(windowWidth * .6, windowHeight);
+    resizeCanvas(windowWidth * .6, windowHeight - 48);
 
     timer = createDiv('90');
     timer.id('timer');
-    timer.mouseClicked(function() {
-        socket.emit('undoDrawing');
-    })
     colorSelector = createInput();
     colorSelector.id('colorSelector');
     colorSelector.attribute('type', 'color');
     socket = io.connect('http://116.240.152.165:9876');
+
+    wordDiv = createDiv('');
+    wordDiv.id('wordDiv');
+
+    undoButton = createDiv('Undo');
+    undoButton.id('undoButton');
+    undoButton.mouseClicked(function() {
+        socket.emit('undoDrawing');
+    });
+
 
     // cc.touchStarted(function(){
     //   console.log('touch triggered\n' + mouseX + " - " + mouseY);
@@ -100,13 +109,16 @@ function setup() {
     socket.on('guesserWord', function(data) {
         new Alert(`Round ` + data.count + `!<br>Your word to guess is <span style="font-weight: bold;">` + data.length + "</span> letters long", "#B71C1C");
         addToChat(`Round ` + data.count + `!<span style="color: rgba(255,128,128,1)"><br>Your word to guess is <span style="font-weight: bold;">` + data.length + "</span> letters long<BR><BR></span>")
+        showWord(data.length);
         removeGuesses();
         updatePlayerList();
+        removeUndo();
     });
 
     socket.on('drawerWord', function(data) {
         new Alert(`Round ` + data.count + `!<br>Your word to draw is <span style="font-weight: bold;">` + data.word + ".</span>", "#1B5E20");
         addToChat(`Round ` + data.count + `!<span style="color: rgba(128,255,128,1)"><br>Your word to draw is <span style="font-weight: bold;">` + data.word + ".</span><BR><BR></span>");
+        showWord(data.word);
         removeGuesses();
         updatePlayerList();
     })
@@ -142,7 +154,7 @@ function setup() {
 
 
     socket.on('joinFailed', function(data) {
-        nameInput.value('Name must be less than 30 characters.');
+        new Alert('Name input field must be less than 30 characters!', "#B71C1C");
     });
 
     socket.on('undoDrawing', function() {
@@ -165,12 +177,12 @@ function setup() {
         // updatePlayerList();
     })
 
-    socket.on('updateScoreboard', function(data){
-      var p = idPlayer(data.id);
-      // console.log(data);
-      p.score = data.score;
-      p.correctlyGuessed = data.correctlyGuessed;
-      updatePlayerList();
+    socket.on('updateScoreboard', function(data) {
+        var p = idPlayer(data.id);
+        // console.log(data);
+        p.score = data.score;
+        p.correctlyGuessed = data.correctlyGuessed;
+        updatePlayerList();
     });
 
     socket.on('chatTooLong', function() {
@@ -196,8 +208,8 @@ function clearDrawing() {
 }
 
 function removeGuesses() {
-    players.forEach(function(e){
-      e.correctlyGuessed = false;
+    players.forEach(function(e) {
+        e.correctlyGuessed = false;
     });
     me.correctlyGuessed = false;
 }
@@ -213,6 +225,39 @@ function mouseDragged() {
     return false;
 }
 
+function showWord(s){
+  if (typeof(s) === "string"){
+    wordDiv.html(s);
+  } else if (typeof(s) === "number" ) {
+    var string = "";
+    for (var i = 1; i <= s; i++){
+      string = string + "_ ";
+    }
+    wordDiv.html(string);
+  }
+}
+
+
+function removeUndo() {
+    if (undoState) {
+        undoState = false;
+        $('#undoButton').animate({
+            opacity: 0
+        }, 250, function() {
+            undoButton.style('display', 'none');
+        });
+    }
+}
+
+function readdUndo() {
+  if (!undoState) {
+    undoState = true;
+    undoButton.style('display', 'inline-block');
+    $('#undoButton').animate({
+        opacity: 1
+    }, 250);
+  }
+}
 
 function mouseReleased() {
     endDrawing();
@@ -233,7 +278,9 @@ function undoDrawing() {
             for (var j = currentDrawing.drawing.length - 1; j >= i; j--) {
                 currentDrawing.drawing.splice(j, 1);
             }
+            if (currentDrawing.drawing.length === 0) removeUndo();
             currentDrawing.show();
+
             break;
 
         }
@@ -250,7 +297,7 @@ function addToChat(data) {
 function startDrawing() {
     print('mouse pressed! ' + mouseX + " - " + mouseY)
     var col = color(document.getElementById('colorSelector').value);
-    if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width) {
+    if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width && mouseY > 0) {
         var json = {
             x: mouseX,
             y: mouseY,
@@ -285,7 +332,7 @@ function idPlayer(playerID) {
 function continueDrawing() {
     print('mouse dragged! ' + mouseX + " - " + mouseY)
     var col = color(document.getElementById('colorSelector').value);
-    if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width) {
+    if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width && mouseY > 0) {
         var json = {
             x: mouseX,
             y: mouseY,
@@ -312,7 +359,7 @@ function continueDrawing() {
 function endDrawing() {
     print('mouse released! ' + mouseX + " - " + mouseY)
     var col = color(document.getElementById('colorSelector').value);
-    if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width) {
+    if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width && mouseY > 0) {
         var json = {
             x: mouseX,
             y: mouseY,
@@ -328,6 +375,7 @@ function endDrawing() {
         currentDrawing.addPoint(json);
         socket.emit('addToDrawing', json);
         // console.log('added ellipse at ' + mouseX + ", " + mouseY);
+        readdUndo();
     }
     // return false;
 }
@@ -360,15 +408,12 @@ function updatePlayerList() {
         p.style('color', 'black');
         p.style('font-weight', 'regular');
         if (e.correctlyGuessed) {
-          p.style('color', 'rgba(0,0,128,1)');
-          p.style('font-weight', 'bold');
+            p.style('color', 'rgba(0,0,96,1)');
+            p.style('font-weight', 'bold');
         }
         if (e.isDrawing) {
-            p.style('color', 'rgba(0,128,0,1)');
+            p.style('color', 'rgba(0,96,0,1)');
             p.style('font-weight', 'bold');
-            p.mouseClicked(function() {
-                socket.emit('undoDrawing');
-            })
         }
     });
 }
@@ -426,10 +471,9 @@ function draw() {
 
 function windowResized() {
     // console.log('width: ' + width + ' height: ' + height + "\nwinW: " + (windowWidth * .6) + " winH: " + windowHeight);
-    currentDrawing.rescale(((windowWidth * .6) / width), (windowHeight / height));
-    resizeCanvas(windowWidth * .6, windowHeight);
+    currentDrawing.rescale(((windowWidth * .6) / width), ((windowHeight - 48) / height));
+    resizeCanvas(windowWidth * .6, windowHeight - 48);
     // currentDrawing.drawing = [];
     currentDrawing.show();
     $("#chatHistory").scrollTop($("#chatHistory").prop("scrollHeight"));
-
 }
