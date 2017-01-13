@@ -1,7 +1,7 @@
 function Alert(msg, bg, fg) {
 
     this.msg = msg;
-    this.bg = bg || "#424242";
+    this.bg = bg || "#212121";
     this.fg = fg || "#FFFFFF";
     this.id = Math.floor(random(1000));
 

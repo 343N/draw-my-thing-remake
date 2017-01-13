@@ -87,7 +87,7 @@ function setup() {
 
     socket.on('addPlayer', function(data) {
         players.push(data);
-        new Alert(data.name + " has joined the game!")
+        new Alert(`<span style="font-weight: bold">` + data.name + "</span> has joined the game!")
         updatePlayerList();
     })
 
@@ -154,7 +154,7 @@ function setup() {
 
 
     socket.on('joinFailed', function(data) {
-        new Alert('Name input field must be less than 30 characters!', "#B71C1C");
+        new Alert(data, "#B71C1C");
     });
 
     socket.on('undoDrawing', function() {
@@ -184,6 +184,9 @@ function setup() {
         p.correctlyGuessed = data.correctlyGuessed;
         updatePlayerList();
     });
+
+
+    socket.on('clearScores', clearScores);
 
     socket.on('chatTooLong', function() {
         addToChat("Message too long! Must be less than 300 characters.<BR><BR>");
@@ -271,7 +274,7 @@ function mouseReleased() {
 function undoDrawing() {
     // console.log(currentDrawing.drawing.length);
     for (var i = currentDrawing.drawing.length - 1; i >= 0; i--) {
-        // console.log('looking for beginning at latest ' + i);
+        console.log('looking for beginning at latest ' + i);
         if (currentDrawing.drawing[i].begin) {
             // console.log(i);
             // console.log(j);
@@ -295,7 +298,7 @@ function addToChat(data) {
 }
 
 function startDrawing() {
-    print('mouse pressed! ' + mouseX + " - " + mouseY)
+    // print('mouse pressed! ' + mouseX + " - " + mouseY)
     var col = color(document.getElementById('colorSelector').value);
     if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width && mouseY > 0) {
         var json = {
@@ -315,6 +318,7 @@ function startDrawing() {
         // console.log('begun drawing');
         // console.log(json + " is all the drawing data");
         socket.emit('addToDrawing', json);
+        readdUndo();
         // console.log('added ellipse at ' + mouseX + ", " + mouseY);
     }
     // return false;
@@ -330,7 +334,7 @@ function idPlayer(playerID) {
 
 
 function continueDrawing() {
-    print('mouse dragged! ' + mouseX + " - " + mouseY)
+    // print('mouse dragged! ' + mouseX + " - " + mouseY)
     var col = color(document.getElementById('colorSelector').value);
     if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width && mouseY > 0) {
         var json = {
@@ -357,7 +361,7 @@ function continueDrawing() {
 
 
 function endDrawing() {
-    print('mouse released! ' + mouseX + " - " + mouseY)
+    // print('mouse released! ' + mouseX + " - " + mouseY)
     var col = color(document.getElementById('colorSelector').value);
     if (joinedGame && me.isDrawing && mouseX > 0 && mouseX < width && mouseY > 0) {
         var json = {
@@ -375,7 +379,7 @@ function endDrawing() {
         currentDrawing.addPoint(json);
         socket.emit('addToDrawing', json);
         // console.log('added ellipse at ' + mouseX + ", " + mouseY);
-        readdUndo();
+
     }
     // return false;
 }
@@ -416,6 +420,12 @@ function updatePlayerList() {
             p.style('font-weight', 'bold');
         }
     });
+}
+
+function clearScores(){
+  players.forEach(function(e){
+    e.score = 0;
+  });
 }
 
 
