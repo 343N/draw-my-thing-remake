@@ -62,13 +62,14 @@ function setup() {
     });
 
 
-    socket.on('pushAlert', function(data){
-      new Alert(data.msg, data.bg, data.fg)
+    socket.on('pushAlert', function(data) {
+        new Alert(data.msg, data.bg, data.fg)
     });
 
     socket.on('disconnect', function(data) {
         players = [];
         updatePlayerList();
+
         connected = false;
         joinedGame = false;
         nameInput.remove();
@@ -97,13 +98,21 @@ function setup() {
     })
 
     socket.on('guesserWord', function(data) {
-        new Alert(`New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long");
-        addToChat(`New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long<BR><BR>")
+        new Alert(`New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long", "#B71C1C");
+        addToChat(`<span style="color: rgba(255,128,128,1)">New Word! <br>Your word to guess is <span style="font-weight: bold;">` + data + "</span> letters long<BR><BR></span>")
+        players.forEach(function(e){
+          e.correctlyGuessed = false;
+        });
+        updatePlayerList();
     });
 
     socket.on('drawerWord', function(data) {
-        new Alert(`New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span>");
-        addToChat(`New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span><BR><BR>");
+        new Alert(`New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span>", "#1B5E20");
+        addToChat(`<span style="color: rgba(128,255,128,1)">New Word!<br>Your word to draw is <span style="font-weight: bold;">` + data + ".</span><BR><BR></span>");
+        players.forEach(function(e){
+          e.correctlyGuessed = false;
+        });
+        updatePlayerList();
     })
 
     socket.on('joinGame', function(data) {
@@ -152,8 +161,18 @@ function setup() {
 
     socket.on('correctGuess', function(data) {
         // addToChat('<span style="font-weight: bold">Correct! The word was ' + data + "!</span><br><br>");
-        new Alert('Correct! The word was ' + data + '!');
+        new Alert('Correct! The word was <span style="font-weight: bold">' + data + '</span>!');
+
+        // updatePlayerList();
     })
+
+    socket.on('updateScoreboard', function(data){
+      var p = idPlayer(data.id);
+      console.log(data);
+      p.score = data.score;
+      p.correctlyGuessed = data.correctlyGuessed;
+      updatePlayerList();
+    });
 
     socket.on('chatTooLong', function() {
         addToChat("Message too long! Must be less than 300 characters.<BR><BR>");
@@ -181,16 +200,18 @@ function showUndoButton() {
 
 }
 
-function mousePressed(){
-  startDrawing();
+function mousePressed() {
+    startDrawing();
 }
-function mouseDragged(){
-  continueDrawing();
-  return false;
+
+function mouseDragged() {
+    continueDrawing();
+    return false;
 }
-function mouseReleased(){
-  endDrawing();
-  // return false;
+
+function mouseReleased() {
+    endDrawing();
+    // return false;
 }
 
 // function askUndo(){
@@ -244,6 +265,15 @@ function startDrawing() {
     }
     // return false;
 }
+
+function idPlayer(playerID) {
+    for (var i = 0; i < players.length; i++) {
+        if (playerID === players[i].id) {
+            return players[i];
+        }
+    }
+}
+
 
 function continueDrawing() {
     print('mouse dragged! ' + mouseX + " - " + mouseY)
@@ -315,11 +345,18 @@ function removePlayerList() {
 function updatePlayerList() {
     removePlayerList();
     players.forEach(function(e) {
-        var p = createDiv(e.name);
+        var p = createDiv(e.name + ' - ' + e.score);
         p.class('playerEntry');
         p.parent('#leftDiv');
         p.style('color', 'black');
         p.style('font-weight', 'regular');
+        if (e.correctlyGuessed) {
+          p.style('color', 'rgba(0,0,128,1)');
+          p.style('font-weight', 'bold');
+          p.mouseClicked(function() {
+            socket.emit('undoDrawing');
+          })
+        }
         if (e.isDrawing) {
             p.style('color', 'rgba(0,128,0,1)');
             p.style('font-weight', 'bold');

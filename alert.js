@@ -27,7 +27,7 @@ function Alert(msg, bg, fg) {
     this.jq.animate({
         top: '2px'
         // top: 0
-    }, 500, 'swing', function() {
+    }, 250, 'swing', function() {
         console.log('entering page');
         // console.log(leavePage);
         // console.log(this.id);
