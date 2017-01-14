@@ -3,7 +3,7 @@ var socket;
 var joinedGame = false;
 var players = [];
 var renderMode;
-var me;
+// var me = new Player)
 var nameInput, timer, renderModeSelect, undoButton, wordDiv;
 var colorSelector;
 var currentDrawing;
@@ -30,7 +30,7 @@ function setup() {
     undoButton.id('undoButton');
     undoButton.mouseClicked(function() {
         console.log('undo pressed!')
-        socket.emit('undoDrawing');
+        socket.emit('undoDrawing', me.currentLobby);
     });
 
 
@@ -50,32 +50,48 @@ function setup() {
     //   endDrawing();
     // });
 
-    socket.on('connected', function(data) {
+    socket.on('connected', function() {
         background(200);
         stroke(2);
         fill(255);
         console.log('connected');
         askForName();
-        console.log(data);
+        // console.log(data);
         connected = true;
-        for (var i = 0; i < data.players.length; i++) {
-            players.push(data.players[i]);
-        }
-        console.log(data.drawing);
-        data.drawing.forEach(function(e) {
-            e.x = e.x * (width / e.w);
-            e.y = e.y * (height / e.h);
-            currentDrawing.addPoint(e);
-            //currentDrawing.show();
-        });
-
-
-
-        refreshPlayerList();
     });
 
-    socket.on('requestData',function(data){
-      console.log(data);
+
+
+    socket.on('joinLobby', function(data) {
+        if (!data.isMainLobby) {
+            console.log(data.drawing);
+            data.drawing.forEach(function(e) {
+                e.x = e.x * (width / e.w);
+                e.y = e.y * (height / e.h);
+                currentDrawing.addPoint(e);
+                //currentDrawing.show();
+            });
+        }
+        me.currentLobby = data;
+        me.currentLobby.players.push(me)
+        addToChat("You've joined " + data.name);
+        players = data.players;
+        players.forEach(function(e){
+          addPlayerCard(e);
+        })
+        // refreshPlayerList();
+        console.log('joined lobby');
+
+        // players = data.players;
+        // else {
+        //   lobbySelectionScreen();
+        // }
+    })
+
+
+
+    socket.on('requestData', function(data) {
+        console.log(data);
     })
 
     socket.on('pushAlert', function(data) {
@@ -85,7 +101,6 @@ function setup() {
     socket.on('disconnect', function(data) {
         players = [];
         removePlayerList();
-
         connected = false;
         joinedGame = false;
         nameInput.remove();
@@ -100,15 +115,14 @@ function setup() {
 
     socket.on('removePlayer', function(data) {
         // console.log(data);
-        for (var i = 0; i < players.length; i++) {
-            var p = players[i];
-            if (data === p.id) {
-                removePlayerCard(p);
+        players.forEach(function(e, i) {
+            if (data === e.id) {
+                removePlayerCard(e);
                 players.splice(i, 1);
                 // console.log('deleted player');
 
             }
-        }
+        });
     });
 
     socket.on('updateTimer', function(data) {
@@ -130,16 +144,23 @@ function setup() {
         removeGuesses();
     })
 
-    socket.on('joinGame', function(data) {
-        // background(200);
-        me = new Player(data, socket.id);
-        // console.log('added ' + me);
-        socket.emit('addPlayer', me);
-        players.push(me);
-        joinedGame = true;
-        nameInput.remove();
-        addPlayerCard(me);
-        // refreshPlayerList();
+
+
+    // socket.on('connectToGame', function(data) {
+    //     // background(200);
+    //     me = new Player(data, socket.id);
+    //     // console.log('added ' + me);
+    //     // socket.emit('addPlayer', me);
+    //     players.push(me);
+    //     joinedGame = true;
+    //     nameInput.remove();
+    //     addPlayerCard(me);
+    //     // refreshPlayerList();
+    // });
+
+    socket.on('givePlayer', function(p){
+      me = p;
+      nameInput.remove();
     });
 
     socket.on('isDrawing', function(data) {
@@ -206,7 +227,11 @@ function setup() {
         currentDrawing.addPoint(data);
         // currentDrawing.show();
         // console.log('data recieved');
-    })
+    });
+
+    socket.on('receiveData', function(a){
+      console.log(a);
+    });
 
 
     var chatInput = select('#chatInput');
@@ -322,7 +347,8 @@ function startDrawing() {
             g: col.levels[1],
             b: col.levels[2],
             end: false,
-            player: me
+            // id: me.id,
+            lobby: me.lobby.id
         }
         currentDrawing.addPoint(json);
         // currentDrawing.show();
@@ -358,7 +384,8 @@ function continueDrawing() {
             g: col.levels[1],
             b: col.levels[2],
             end: false,
-            player: me
+            // id: me.id,
+            lobby: me.lobby.id
         }
         // console.log(json + " is all the drawing data");
         currentDrawing.addPoint(json);
@@ -385,7 +412,8 @@ function endDrawing() {
             g: col.levels[1],
             b: col.levels[2],
             end: true,
-            player: me
+            // id: me.id,
+            lobby: me.lobby.id
         }
         currentDrawing.addPoint(json);
         socket.emit('addToDrawing', json);
@@ -401,7 +429,11 @@ function sendChat() {
 
     if (joinedGame) {
         var chatBox = select('#chatInput');
-        socket.emit('chatMsg', chatBox.value());
+        var json = {
+            msg: msg,
+            lobby: me.lobby.id
+        }
+        socket.emit('chatMsg', json);
         chatBox.value('');
     }
 
@@ -412,6 +444,7 @@ function removePlayerList() {
     p.forEach(function(element) {
         element.remove();
     })
+
     var sc = selectAll('.playerScore');
     sc.forEach(function(e) {
         e.remove();
@@ -477,12 +510,12 @@ function updatePlayerCard(a) {
     } else if (p.correctlyGuessed) {
         sc.css('background-color', 'rgba(0,96,0,.3)');
         name.css('background-color', 'rgba(0,96,0,.3)');
-    } else if (p.id == me.id){
+    } else if (p.id == me.id) {
         name.css('background-color', 'rgba(0,0,0,0.2)');
         sc.css('background-color', 'rgba(0,0,0,0.2)');
     } else {
-      sc.css('background-color', 'rgba(0,0,0,0)');
-      name.css('background-color', 'rgba(0,0,0,0)');
+        sc.css('background-color', 'rgba(0,0,0,0)');
+        name.css('background-color', 'rgba(0,0,0,0)');
     }
     sc.html(p.score);
 
@@ -502,13 +535,13 @@ function addPlayerCard(a) {
     sc.id(player.id + '-score');
     sc.class('playerScore');
     sc.parent('#playerList');
-    
-    if (player.id === me.id){
-      p.style('background-color', 'rgba(0,0,0,0.2)');
-      sc.style('background-color', 'rgba(0,0,0,0.2)');
+
+    if (player.id === me.id) {
+        p.style('background-color', 'rgba(0,0,0,0.2)');
+        sc.style('background-color', 'rgba(0,0,0,0.2)');
     } else {
-      p.style('background-color', 'rgba(0,0,0,0)');
-      sc.style('background-color', 'rgba(0,0,0,0)');
+        p.style('background-color', 'rgba(0,0,0,0)');
+        sc.style('background-color', 'rgba(0,0,0,0)');
     }
 }
 
@@ -528,7 +561,8 @@ function askForName() {
     });
 
     nameInput.changed(function() {
-        socket.emit('joinAttempt', nameInput.value());
+        var player = new Player(nameInput.value(), socket.id);
+        socket.emit('joinServerAttempt', player);
         // nameInput.remove();
     });
 }
