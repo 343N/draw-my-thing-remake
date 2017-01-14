@@ -29,6 +29,7 @@ function setup() {
     undoButton = createDiv('Undo');
     undoButton.id('undoButton');
     undoButton.mouseClicked(function() {
+        console.log('undo pressed!')
         socket.emit('undoDrawing');
     });
 
@@ -60,9 +61,12 @@ function setup() {
         for (var i = 0; i < data.players.length; i++) {
             players.push(data.players[i]);
         }
+        console.log(data.drawing);
         data.drawing.forEach(function(e) {
-            currentDrawing.addPoint(e.x * (width / e.w), e.y * (height / e.h));
-            // currentDrawing.show();
+            e.x = e.x * (width / e.w);
+            e.y = e.y * (height / e.h);
+            currentDrawing.addPoint(e);
+            //currentDrawing.show();
         });
 
 
@@ -70,6 +74,9 @@ function setup() {
         refreshPlayerList();
     });
 
+    socket.on('requestData',function(data){
+      console.log(data);
+    })
 
     socket.on('pushAlert', function(data) {
         new Alert(data.msg, data.bg, data.fg)
@@ -495,7 +502,8 @@ function addPlayerCard(a) {
     sc.id(player.id + '-score');
     sc.class('playerScore');
     sc.parent('#playerList');
-    if (player.id == me.id){
+    
+    if (player.id === me.id){
       p.style('background-color', 'rgba(0,0,0,0.2)');
       sc.style('background-color', 'rgba(0,0,0,0.2)');
     } else {
