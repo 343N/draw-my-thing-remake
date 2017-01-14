@@ -66,7 +66,7 @@
           line-height: 48px;
           display: none;
           opacity: 0;
-          user-select: none;
+          /*user-select: ;*/
           top: 0;
           color: white;
           cursor: pointer;
@@ -181,7 +181,7 @@
 
         .playerEntry {
           position: relative;
-          width: 90%;
+          width: 70%;
           padding: 5%;
           text-align: center;
           word-wrap: break-word;
@@ -190,12 +190,37 @@
           -webkit-box-sizing: border-box;
           box-sizing: border-box;
           overflow-y: hidden;
-          /*background-color: #BDBDBD;*/
-          /*font-size: 1.5vw;*/
+          background-color: rgba(0,0,0,0);
+          float: left;
+          /*opacity: 0;*/
+          transition: all 1s;
           height: auto;
-          margin-top: 5%;
-          margin-bottom: 5%;
+          animation-name: fadeIn;
+          animation-iteration-count: 1;
+          animation-duration: 1s;
+          animation-timing-function: ease-out;
+          animation-fill-mode: forwards;
+        }
 
+        @keyframes fadeIn{
+          from {opacity: 0;}
+          to {opacity: 1;}
+        }
+
+        .playerScore {
+          width: 20%;
+          text-align: center;
+          padding: 5%;
+          /*opacity: 1;*/
+          background-color: rgba(0,0,0,0);
+          transition: all 1s;
+          color: white;
+          float: right;
+          animation-name: fadeIn;
+          animation-iteration-count: 1;
+          animation-duration: 1s;
+          animation-timing-function: ease-out;
+          animation-fill-mode: forwards;
         }
 
         .chatName {
@@ -217,7 +242,7 @@
           float: left;
           color: white;
 
-          background-color: rgba(20,20,20,1);
+          background-color: #212121;
           transition: all .25s;
           /*margin-top: 2.5%;*/
           position: relative;
@@ -248,6 +273,46 @@
           overflow-x: none;
         }
 
+        #playerList {
+          height: 80%;
+          position: relative;
+          background-color: #424242;
+          width: 80%;
+          left: 10%;
+          /*padding: 5%;*/
+          margin: 0;
+
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          color: white;
+          outline: solid 1px black;
+          float: left;
+          border: none;
+          /*font-size: 1vw;*/
+          word-wrap: break-word;
+          overflow-y: hidden;
+          overflow-x: none;
+        }
+
+        #meSeperateBox{
+          padding: 5%;
+          height: 5%;
+          width: 80%;
+          top: 2.5%;
+          margin: 0;
+          /*left: 5%;*/
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          left: 10%;
+          float: left;
+          color: white;
+          background-color: #212121;
+          position: relative;
+          /*margin-top: 2.5%;*/
+        }
+
         .chatName {
           font-size: 18px;
           font-weight: bold;
@@ -264,16 +329,13 @@
           font-size: 24px;
           user-select: none;
           text-align: center;
-          background-color: rgba(0,0,0,0);
+          /*background-color: #212121;*/
           color: black;
           /*font-size: 2vw;*/
           transform: translateX(-50%);
         }
 
 
-        #menuDiv{
-          height:
-        }
 
     </style>
 </head>
@@ -282,6 +344,7 @@
 
     <div id="leftDiv">
         <div class="title">Players</div>
+        <div id="playerList"></div>
     </div>
 
     <div id="rightDiv">

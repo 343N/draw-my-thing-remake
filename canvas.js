@@ -67,7 +67,7 @@ function setup() {
 
 
 
-        updatePlayerList();
+        refreshPlayerList();
     });
 
 
@@ -77,7 +77,7 @@ function setup() {
 
     socket.on('disconnect', function(data) {
         players = [];
-        updatePlayerList();
+        removePlayerList();
 
         connected = false;
         joinedGame = false;
@@ -88,16 +88,18 @@ function setup() {
     socket.on('addPlayer', function(data) {
         players.push(data);
         new Alert(`<span style="font-weight: bold">` + data.name + "</span> has joined the game!")
-        updatePlayerList();
+        addPlayerCard(data);
     })
 
     socket.on('removePlayer', function(data) {
         // console.log(data);
         for (var i = 0; i < players.length; i++) {
-            if (data === players[i].id) {
+            var p = players[i];
+            if (data === p.id) {
+                removePlayerCard(p);
                 players.splice(i, 1);
-                console.log('deleted player');
-                updatePlayerList();
+                // console.log('deleted player');
+
             }
         }
     });
@@ -111,7 +113,6 @@ function setup() {
         addToChat(`Round ` + data.count + `!<span style="color: rgba(255,128,128,1)"><br>Your word to guess is <span style="font-weight: bold;">` + data.length + "</span> letters long<BR><BR></span>")
         showWord(data.length);
         removeGuesses();
-        updatePlayerList();
         removeUndo();
     });
 
@@ -120,7 +121,6 @@ function setup() {
         addToChat(`Round ` + data.count + `!<span style="color: rgba(128,255,128,1)"><br>Your word to draw is <span style="font-weight: bold;">` + data.word + ".</span><BR><BR></span>");
         showWord(data.word);
         removeGuesses();
-        updatePlayerList();
     })
 
     socket.on('joinGame', function(data) {
@@ -131,7 +131,8 @@ function setup() {
         players.push(me);
         joinedGame = true;
         nameInput.remove();
-        updatePlayerList();
+        addPlayerCard(me);
+        // refreshPlayerList();
     });
 
     socket.on('isDrawing', function(data) {
@@ -146,8 +147,8 @@ function setup() {
             } else {
                 e.isDrawing = false;
             }
+            updatePlayerCard(e);
         });
-        updatePlayerList();
     });
 
     socket.on('removeGuesses', removeGuesses);
@@ -182,7 +183,7 @@ function setup() {
         // console.log(data);
         p.score = data.score;
         p.correctlyGuessed = data.correctlyGuessed;
-        updatePlayerList();
+        updatePlayerCard(p);
     });
 
 
@@ -213,9 +214,12 @@ function clearDrawing() {
 function removeGuesses() {
     players.forEach(function(e) {
         e.correctlyGuessed = false;
+        updatePlayerCard(e);
     });
     me.correctlyGuessed = false;
 }
+
+
 
 
 
@@ -228,16 +232,16 @@ function mouseDragged() {
     return false;
 }
 
-function showWord(s){
-  if (typeof(s) === "string"){
-    wordDiv.html(s);
-  } else if (typeof(s) === "number" ) {
-    var string = "";
-    for (var i = 1; i <= s; i++){
-      string = string + "_ ";
+function showWord(s) {
+    if (typeof(s) === "string") {
+        wordDiv.html(s);
+    } else if (typeof(s) === "number") {
+        var string = "";
+        for (var i = 1; i <= s; i++) {
+            string = string + "_ ";
+        }
+        wordDiv.html(string);
     }
-    wordDiv.html(string);
-  }
 }
 
 
@@ -253,13 +257,13 @@ function removeUndo() {
 }
 
 function readdUndo() {
-  if (!undoState) {
-    undoState = true;
-    undoButton.style('display', 'inline-block');
-    $('#undoButton').animate({
-        opacity: 1
-    }, 250);
-  }
+    if (!undoState) {
+        undoState = true;
+        undoButton.style('display', 'inline-block');
+        $('#undoButton').animate({
+            opacity: 1
+        }, 250);
+    }
 }
 
 function mouseReleased() {
@@ -401,31 +405,109 @@ function removePlayerList() {
     p.forEach(function(element) {
         element.remove();
     })
+    var sc = selectAll('.playerScore');
+    sc.forEach(function(e) {
+        e.remove();
+    })
 }
 
-function updatePlayerList() {
+function refreshPlayerList() {
     removePlayerList();
     players.forEach(function(e) {
-        var p = createDiv(e.name + ' - ' + e.score);
+        // if (e != me || e == me) {
+        var p = createDiv(e.name);
         p.class('playerEntry');
-        p.parent('#leftDiv');
-        p.style('color', 'black');
+        p.parent('#playerList');
+        p.style('background-color', 'rgba(0,0,0,0)');
         p.style('font-weight', 'regular');
+        console.log(e.id);
+        p.id(e.id + '-name');
+        var sc = createDiv(e.score);
+        sc.class('playerScore');
+        sc.parent('#playerList');
+        sc.id(e.id + '-score');
         if (e.correctlyGuessed) {
-            p.style('color', 'rgba(0,0,96,1)');
-            p.style('font-weight', 'bold');
+
+            p.style('background-color', 'rgba(0,96,0,.3)');
+            // p.style('font-weight', 'bold');
+            sc.style('background-color', 'rgba(0,96,0,.3)');
+
+            // sc.style('font-weight', 'bold');
         }
         if (e.isDrawing) {
-            p.style('color', 'rgba(0,96,0,1)');
-            p.style('font-weight', 'bold');
+            p.style('background-color', 'rgba(0,0,96,.3)');
+            // p.style('font-weight', 'bold');/
+            sc.style('background-color', 'rgba(0,0,96,.3)');
+            // sc.style('font-weight', 'bold');
         }
+        // }
     });
 }
 
-function clearScores(){
-  players.forEach(function(e){
-    e.score = 0;
-  });
+function removePlayerCard(a) {
+    var p = a;
+    var name = $('#' + p.id + '-name');
+    var score = $('#' + p.id + '-score');
+    name.fadeOut(2000, function() {
+        name.remove();
+    });
+
+    score.fadeOut(2000, function() {
+        score.remove();
+    });
+
+
+
+}
+
+function updatePlayerCard(a) {
+    var p = a;
+    var sc = $('#' + p.id + '-score');
+    var name = $('#' + p.id + '-name');
+    if (p.isDrawing) {
+        sc.css('background-color', 'rgba(0,0,96,.3)');
+        name.css('background-color', 'rgba(0,0,96,.3)');
+    } else if (p.correctlyGuessed) {
+        sc.css('background-color', 'rgba(0,96,0,.3)');
+        name.css('background-color', 'rgba(0,96,0,.3)');
+    } else if (p.id == me.id){
+        name.css('background-color', 'rgba(0,0,0,0.2)');
+        sc.css('background-color', 'rgba(0,0,0,0.2)');
+    } else {
+      sc.css('background-color', 'rgba(0,0,0,0)');
+      name.css('background-color', 'rgba(0,0,0,0)');
+    }
+    sc.html(p.score);
+
+}
+
+function addPlayerCard(a) {
+    var player = a;
+    var p = createDiv(player.name);
+    p.class('playerEntry');
+    p.parent('#playerList');
+    // p.style('background-color', 'rgba(0,0,0,0)');
+
+    p.style('font-weight', 'regular');
+    p.id(player.id + '-name');
+
+    var sc = createDiv(player.score);
+    sc.id(player.id + '-score');
+    sc.class('playerScore');
+    sc.parent('#playerList');
+    if (player.id == me.id){
+      p.style('background-color', 'rgba(0,0,0,0.2)');
+      sc.style('background-color', 'rgba(0,0,0,0.2)');
+    } else {
+      p.style('background-color', 'rgba(0,0,0,0)');
+      sc.style('background-color', 'rgba(0,0,0,0)');
+    }
+}
+
+function clearScores() {
+    players.forEach(function(e) {
+        e.score = 0;
+    });
 }
 
 

@@ -14,7 +14,7 @@ function Drawing() {
     this.addPoint = function(json) {
         var length = this.drawing.length;
         var prevObj = this.drawing[length - 1];
-        strokeWeight(10);
+        strokeWeight(5);
         stroke(json.r, json.g, json.b);
         noFill();
         if (!json.begin && this.drawing.length > 0) {
@@ -34,7 +34,7 @@ function Drawing() {
             var obj = this.drawing[i];
             var prevObj = this.drawing[i - 1];
             noFill();
-            strokeWeight(10);
+            strokeWeight(5);
             stroke(obj.r, obj.g, obj.b);
             // console.log(obj);
             // console.log(prevObj);
