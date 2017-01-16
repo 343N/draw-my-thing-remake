@@ -4,9 +4,11 @@ var joinedGame = false;
 var players = [];
 var renderMode;
 // var me = new Player)
+var me;
 var nameInput, timer, renderModeSelect, undoButton, wordDiv;
 var colorSelector;
 var currentDrawing;
+var allLobbyInfo;
 var undoState = false;
 
 
@@ -15,6 +17,7 @@ function setup() {
     currentDrawing = new Drawing();
     cc = createCanvas(P2D);
     resizeCanvas(windowWidth * .6, windowHeight - 48);
+
 
     timer = createDiv('90');
     timer.id('timer');
@@ -32,6 +35,10 @@ function setup() {
         console.log('undo pressed!')
         socket.emit('undoDrawing', me.currentLobby);
     });
+
+    // $('#rightDiv').css('opacity','0');
+    // $('#leftDiv').css('opacity','0');
+
 
 
     // cc.touchStarted(function(){
@@ -56,6 +63,7 @@ function setup() {
         fill(255);
         console.log('connected');
         askForName();
+
         // console.log(data);
         connected = true;
     });
@@ -76,8 +84,8 @@ function setup() {
         me.currentLobby.players.push(me)
         addToChat("You've joined " + data.name);
         players = data.players;
-        players.forEach(function(e){
-          addPlayerCard(e);
+        players.forEach(function(e) {
+            addPlayerCard(e);
         })
         // refreshPlayerList();
         console.log('joined lobby');
@@ -88,7 +96,17 @@ function setup() {
         // }
     })
 
-
+    socket.on('allLobbyInfo', function(data){
+      createDiv('').id('lobbySelectionContainer');
+      var lCont = $('#lobbySelectionContainer');
+      allLobbyInfo = data;
+      console.log(data);
+      allLobbyInfo.forEach(function(e){
+        lCont.append('<div id="lobby-'+ e.id + '" class="lobbyContainer"></div>')
+        var le = $('#lobby-'+e.id);
+        le.append('<div class="lobbyTitle">'+e.name+'</div>');
+      })
+    })
 
     socket.on('requestData', function(data) {
         console.log(data);
@@ -158,9 +176,10 @@ function setup() {
     //     // refreshPlayerList();
     // });
 
-    socket.on('givePlayer', function(p){
-      me = p;
-      nameInput.remove();
+    socket.on('givePlayer', function(p) {
+        me = p;
+        nameInput.remove();
+        $('#Welcome').css('background-color','rgba(0,0,0,0)');
     });
 
     socket.on('isDrawing', function(data) {
@@ -229,13 +248,16 @@ function setup() {
         // console.log('data recieved');
     });
 
-    socket.on('receiveData', function(a){
-      console.log(a);
+    socket.on('receiveData', function(a) {
+        console.log(a);
     });
 
 
     var chatInput = select('#chatInput');
     chatInput.changed(sendChat);
+    createDiv('').id('Welcome');
+    $('#Welcome').css('transition','all 1s');
+
 
 }
 
@@ -252,7 +274,9 @@ function removeGuesses() {
 }
 
 
+function createLobbyList(){
 
+}
 
 
 function mousePressed() {
@@ -453,33 +477,23 @@ function removePlayerList() {
 
 function refreshPlayerList() {
     removePlayerList();
+    var addPlayer = addPlayerCard();
     players.forEach(function(e) {
-        // if (e != me || e == me) {
-        var p = createDiv(e.name);
-        p.class('playerEntry');
-        p.parent('#playerList');
-        p.style('background-color', 'rgba(0,0,0,0)');
-        p.style('font-weight', 'regular');
-        console.log(e.id);
-        p.id(e.id + '-name');
-        var sc = createDiv(e.score);
-        sc.class('playerScore');
-        sc.parent('#playerList');
-        sc.id(e.id + '-score');
-        if (e.correctlyGuessed) {
-
-            p.style('background-color', 'rgba(0,96,0,.3)');
-            // p.style('font-weight', 'bold');
-            sc.style('background-color', 'rgba(0,96,0,.3)');
-
-            // sc.style('font-weight', 'bold');
-        }
-        if (e.isDrawing) {
-            p.style('background-color', 'rgba(0,0,96,.3)');
-            // p.style('font-weight', 'bold');/
-            sc.style('background-color', 'rgba(0,0,96,.3)');
-            // sc.style('font-weight', 'bold');
-        }
+        addPlayer(e);
+        // if (e.correctlyGuessed) {
+        //
+        //     p.style('background-color', 'rgba(0,96,0,.3)');
+        //     // p.style('font-weight', 'bold');
+        //     sc.style('background-color', 'rgba(0,96,0,.3)');
+        //
+        //     // sc.style('font-weight', 'bold');
+        // }
+        // if (e.isDrawing) {
+        //     p.style('background-color', 'rgba(0,0,96,.3)');
+        //     // p.style('font-weight', 'bold');/
+        //     sc.style('background-color', 'rgba(0,0,96,.3)');
+        //     // sc.style('font-weight', 'bold');
+        // }
         // }
     });
 }
@@ -500,8 +514,8 @@ function removePlayerCard(a) {
 
 }
 
-function updatePlayerCard(a) {
-    var p = a;
+function updatePlayerCard(pl) {
+    var p = pl;
     var sc = $('#' + p.id + '-score');
     var name = $('#' + p.id + '-name');
     if (p.isDrawing) {
@@ -521,28 +535,22 @@ function updatePlayerCard(a) {
 
 }
 
-function addPlayerCard(a) {
-    var player = a;
-    var p = createDiv(player.name);
-    p.class('playerEntry');
-    p.parent('#playerList');
-    // p.style('background-color', 'rgba(0,0,0,0)');
+function addPlayerCard(pl) {
+    // var player = a;
+    var list = $('#playerList');
+    list.append('<div id="' + pl.id + '" class="playerContainer"></div>');
+    var c = $('#' + pl.id);
+    console.log(c);
+    // var p = $('#'+pl.id+'-name');
 
-    p.style('font-weight', 'regular');
-    p.id(player.id + '-name');
+    if (!me.currentLobby.isMainLobby) {
+        c.append('<div id="' + pl.id + '-name" class="playerEntry">' + pl.name + '</div>');
+        c.append('<div id="' + pl.id + '-score" class="playerScore">' + pl.score + '</div>');
+    } else c.append('<div id="' + pl.id + '-name" class="playerEntry" style="width: 100%">' + pl.name + '</div>');
 
-    var sc = createDiv(player.score);
-    sc.id(player.id + '-score');
-    sc.class('playerScore');
-    sc.parent('#playerList');
-
-    if (player.id === me.id) {
-        p.style('background-color', 'rgba(0,0,0,0.2)');
-        sc.style('background-color', 'rgba(0,0,0,0.2)');
-    } else {
-        p.style('background-color', 'rgba(0,0,0,0)');
-        sc.style('background-color', 'rgba(0,0,0,0)');
-    }
+    if (pl.id === me.id) c.css('background-color', 'rgba(0,0,0,0.2)');
+    else c.css('background-color', 'rgba(0,0,0,0)');
+    // sc.style('background-color', 'rgba(0,0,0,0)');
 }
 
 function clearScores() {
