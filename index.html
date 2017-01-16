@@ -115,7 +115,7 @@
           /*width: 100%;*/
         }
         #nameInput {
-          /*background-color: #424242;*/
+          background-color: #292929;
           position: absolute;
           width: 50%;
           height: 5%;
@@ -169,6 +169,7 @@
 
         .playerContainer {
           /*height: auto;*/
+          opacity: 0;
           animation-name: fadeIn;
           animation-iteration-count: 1;
           animation-duration: 1s;
@@ -177,6 +178,7 @@
           position: relative;
           width: 100%;
           height: auto;
+          transition: all 1s;
         }
 
         .playerEntry {
@@ -233,9 +235,10 @@
         }
 
         #chatInput {
-          padding: 5%;
-          height: auto;
+          /*padding: 5%;*/
+          height: 5%;
           width: 80%;
+          outline: solid 1px black;
           top: 2.5%;
           margin: 0;
           /*left: 5%;*/
@@ -243,17 +246,19 @@
           -webkit-box-sizing: border-box;
           box-sizing: border-box;
           left: 10%;
+          padding-left: 16px;
+          padding-right: 16px;
           float: left;
           color: white;
 
-          background-color: #212121;
+          background-color: #424242;
           transition: all .25s;
           /*margin-top: 2.5%;*/
           position: relative;
 
         }
         #chatInput:focus {
-          background-color: #424242;
+          background-color: #333333;
         }
 
         #chatHistory {
@@ -358,6 +363,9 @@
         .lobbyContainer{
             position: relative;
             background-color: #424242;
+            /*outline: solid 1px black;*/
+            margin: -1px;
+            border: solid 1px black;
             width: 33.33%;
             height: 20%;
             float: left;
@@ -391,6 +399,9 @@
           position: absolute;
           z-index: 2;
           background-color: #212121;
+          font-size: 48px;
+          color: white;
+          padding-top: 25%;
           /*transition: background-color 1s;*/
         }
 

@@ -30,10 +30,10 @@ function Alert(msg, bg, fg) {
         console.log('entering page');
         // console.log(leavePage);
         // console.log(this.id);
-        setTimeout(leavePage, 4000, this.id);
+        setTimeout(deleteElement, 4000, this.id);
     });
 
-    function leavePage(id){
+    function deleteElement(id){
       jq = $('#' + id);
       // p5dom = select('#' + id);
       jq.animate({
