@@ -29,7 +29,7 @@ function Drawing() {
 
     this.show = function() {
         // noStroke();
-        background(200);
+        background(150);
         for (var i = 0; i < this.drawing.length; i++) {
             var obj = this.drawing[i];
             var prevObj = this.drawing[i - 1];
@@ -61,7 +61,7 @@ function Drawing() {
     this.clear = function() {
         endShape();
         this.drawing = [];
-        background(200);
+        background(150);
     }
 
 }

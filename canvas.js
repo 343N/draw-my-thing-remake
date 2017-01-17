@@ -32,8 +32,8 @@ function setup() {
     undoButton = createDiv('Undo');
     undoButton.id('undoButton');
     undoButton.mouseClicked(function() {
-        console.log('undo pressed!')
-        socket.emit('undoDrawing', me.currentLobby);
+        console.log('undo pressed!');
+        socket.emit('undoDrawing', me.currentLobby.id);
     });
 
     // $('#rightDiv').css('opacity','0');
@@ -58,12 +58,13 @@ function setup() {
     // });
 
     socket.on('connected', function() {
-        background(200);
+        background(150);
         stroke(2);
         fill(255);
         console.log('connected');
         $('#Welcome').html('')
         askForName();
+        $('#chatHistory').html('');
 
         // console.log(data);
         connected = true;
@@ -72,9 +73,10 @@ function setup() {
 
 
     socket.on('joinLobby', function(data) {
+      console.log(data);
         if (!data.isMainLobby) {
-            console.log(data.drawing);
-            data.drawing.forEach(function(e) {
+            console.log(data.currentDrawing);
+            data.currentDrawing.forEach(function(e) {
                 e.x = e.x * (width / e.w);
                 e.y = e.y * (height / e.h);
                 currentDrawing.addPoint(e);
@@ -83,10 +85,13 @@ function setup() {
         }
         me.currentLobby = data;
         me.currentLobby.players.push(me)
+        removeLobbyList();
+        removePlayerList();
         addToChat("You've joined " + data.name + "<br><br>");
         players = data.players;
         players.forEach(function(e) {
             addPlayerCard(e);
+            console.log('does ' + e.id + ' match ' + me.id);
         })
         joinedLobby = true;
         // refreshPlayerList();
@@ -98,16 +103,8 @@ function setup() {
         // }
     })
 
-    socket.on('allLobbyInfo', function(data){
-      createDiv('').id('lobbySelectionContainer');
-      var lCont = $('#lobbySelectionContainer');
-      allLobbyInfo = data;
-      console.log(data);
-      allLobbyInfo.forEach(function(e){
-        lCont.append('<div id="lobby-'+ e.id + '" class="lobbyContainer"></div>')
-        var le = $('#lobby-'+e.id);
-        le.append('<div class="lobbyTitle">'+e.name+'</div>');
-      })
+    socket.on('allLobbyInfo', function(data) {
+        createLobbyList(data);
     })
 
     socket.on('requestData', function(data) {
@@ -120,17 +117,18 @@ function setup() {
 
     socket.on('disconnect', function(data) {
         players = [];
-        removePlayerList();
         connected = false;
         joinedLobby = false;
         nameInput.remove();
         // joinedLobby = false;
         currentDrawing.clear();
-        $('#Welcome').css('background-color','#212121');
+        $('#Welcome').css('background-color', '#212121');
         $('#Welcome').html('Connecting...')
-        setTimeout(function(){
-          $('#Welcome').css('z-index','2');
-        })
+        $('#Welcome').css('z-index', '2');
+        setTimeout(function() {
+            removePlayerList();
+            removeLobbyList();
+        }, 2000);
     });
 
     socket.on('addPlayer', function(data) {
@@ -187,9 +185,9 @@ function setup() {
     socket.on('givePlayer', function(p) {
         me = p;
         nameInput.remove();
-        $('#Welcome').css('background-color','rgba(0,0,0,0)');
-        setTimeout(function(){
-          $('#Welcome').css('z-index','-2');
+        $('#Welcome').css('background-color', 'rgba(0,0,0,0)');
+        setTimeout(function() {
+            $('#Welcome').css('z-index', '-2');
         })
     });
 
@@ -267,7 +265,7 @@ function setup() {
     var chatInput = select('#chatInput');
     chatInput.changed(sendChat);
     createDiv('').id('Welcome');
-    $('#Welcome').css('transition','all 1s');
+    $('#Welcome').css('transition', 'all 1s');
 
 
 }
@@ -284,11 +282,55 @@ function removeGuesses() {
     me.correctlyGuessed = false;
 }
 
+//
+// LOBBY LIST MANIPULATION
+//
 
-function createLobbyList(){
-
+function createLobbyList(allLobbyInfo) {
+    createDiv('').id('lobbySelectionContainer');
+    var lCont = $('#lobbySelectionContainer');
+    console.log(allLobbyInfo);
+    allLobbyInfo.forEach(function(e) {
+        console.log(e);
+        addLobby(e);
+    });
 }
 
+function addLobby(l) {
+    var lCont = $('#lobbySelectionContainer');
+    lCont.append('<div id="lobby-' + l.id + '" class="lobbyContainer"></div>')
+    var le = $('#lobby-' + l.id);
+    le.append('<div class="lobbyTitle">' + l.name + '</div>');
+    le.append('<div class="lobbyJoin" id="' + l.id + '-join">Join!</div>');
+    var join = $("#" + l.id + '-join');
+    join.click(function() {
+        var json = {
+            p: me.id,
+            l: l.id,
+            leaving: me.currentLobby.id
+        };
+        console.log('attempting to join ' + l.name);
+        socket.emit('joinLobbyAttempt', json);
+    });
+}
+
+
+function removeLobby(l) {
+    var e = $('#lobby-' + l.id);
+    var animTime = 2
+    e.css('animation-name', 'fadeOut');
+    e.css('animation-iteration-count', '1');
+    e.css('animation-duration', animTime + 's');
+    e.css('animation-timing-function', 'ease-out');
+    e.css('animation-fill-mode', 'forwards');
+    setTimeout(function() {
+        e.remove();
+    }, animTime * 1000);
+}
+
+function removeLobbyList() {
+    $('#lobbySelectionContainer').remove();
+}
 
 function mousePressed() {
     startDrawing();
@@ -297,6 +339,11 @@ function mousePressed() {
 function mouseDragged() {
     continueDrawing();
     return false;
+}
+
+function mouseReleased() {
+    endDrawing();
+    // return false;
 }
 
 function showWord(s) {
@@ -333,10 +380,6 @@ function readdUndo() {
     }
 }
 
-function mouseReleased() {
-    endDrawing();
-    // return false;
-}
 
 // function askUndo(){
 // socket.emit('askUndo')
@@ -383,9 +426,11 @@ function startDrawing() {
             b: col.levels[2],
             end: false,
             // id: me.id,
-            lobby: me.lobby.id
+            lobby: me.currentLobby.id
         }
         currentDrawing.addPoint(json);
+        // console.log('i am drawnig is all the drawing data');
+
         // currentDrawing.show();
         // console.log('begun drawing');
         // console.log(json + " is all the drawing data");
@@ -420,9 +465,9 @@ function continueDrawing() {
             b: col.levels[2],
             end: false,
             // id: me.id,
-            lobby: me.lobby.id
+            lobby: me.currentLobby.id
         }
-        // console.log(json + " is all the drawing data");
+        console.log('i am drawnig is all the drawing data');
         currentDrawing.addPoint(json);
         socket.emit('addToDrawing', json);
         // currentDrawing.show();
@@ -448,7 +493,7 @@ function endDrawing() {
             b: col.levels[2],
             end: true,
             // id: me.id,
-            lobby: me.lobby.id
+            lobby: me.currentLobby.id
         }
         currentDrawing.addPoint(json);
         socket.emit('addToDrawing', json);
@@ -490,29 +535,24 @@ function removePlayerList() {
 
 function refreshPlayerList() {
     removePlayerList();
-    var addPlayer = addPlayerCard();
     players.forEach(function(e) {
-        addPlayer(e);
-        // if (e.correctlyGuessed) {
-        //
-        //     p.style('background-color', 'rgba(0,96,0,.3)');
-        //     // p.style('font-weight', 'bold');
-        //     sc.style('background-color', 'rgba(0,96,0,.3)');
-        //
-        //     // sc.style('font-weight', 'bold');
-        // }
-        // if (e.isDrawing) {
-        //     p.style('background-color', 'rgba(0,0,96,.3)');
-        //     // p.style('font-weight', 'bold');/
-        //     sc.style('background-color', 'rgba(0,0,96,.3)');
-        //     // sc.style('font-weight', 'bold');
-        // }
-        // }
+        addPlayerCard(e);
     });
 }
 
 function removePlayerCard(p) {
-    $('#'+p.id).remove()
+    $('#' + p.id).attr("id", p.id + '-removing');
+    var e = $('#' + p.id + '-removing');
+    var animTime = 1
+    // .remove()
+    e.css('animation-name', 'fadeOut');
+    e.css('animation-iteration-count', '1');
+    e.css('animation-duration', animTime + 's');
+    e.css('animation-timing-function', 'ease-out');
+    e.css('animation-fill-mode', 'forwards');
+    setTimeout(function() {
+        e.remove()
+    }, animTime * 1000)
 
 
 
@@ -521,7 +561,7 @@ function removePlayerCard(p) {
 
 function updatePlayerCard(pl) {
     var p = pl;
-    var card = $(''+p.id);
+    var card = $('' + p.id);
     // var sc = $('#' + p.id + '-score');
     // var name = $('#' + p.id + '-name');
     if (p.isDrawing) {

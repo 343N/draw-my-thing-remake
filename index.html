@@ -38,6 +38,8 @@
             left: 20%;
             height: 100%;
             width: 60%;
+            z-index: 0;
+
             top: 48px;
             /*cursor: */
             /*border-top: solid 2px black;*/
@@ -91,6 +93,7 @@
           width: 60%;
           font-size: 24px;
           font-weight: 500;
+          outline: solid 1px black;
           text-align: center;
           /*user-select: none;*/
           line-height: 48px;
@@ -135,6 +138,7 @@
             left: 0%;
             width: 20%;
             height: 100%;
+            z-index: 1;
             outline: 1px solid black;
             /*z-index: -1;*/
         }
@@ -177,6 +181,7 @@
           animation-fill-mode: forwards;
           position: relative;
           width: 100%;
+          overflow: auto;
           height: auto;
           transition: all 1s;
         }
@@ -192,10 +197,12 @@
           -webkit-box-sizing: border-box;
           box-sizing: border-box;
           overflow-y: hidden;
+          float:left;
+          /*margin: -1px;*/
           overflow-x: hidden;
           text-overflow: clip;
           background-color: rgba(0,0,0,0);
-          /*float: left;*/
+          float: left;
           /*opacity: 0;*/
           transition: all 1s;
           height: 100%;
@@ -206,6 +213,12 @@
           from {opacity: 0;}
           to {opacity: 1;}
         }
+
+        @keyframes fadeOut{
+          from {opacity: 1;}
+          to {opacity: 0;}
+        }
+
 
         .playerScore {
           width: 20%;
@@ -367,7 +380,7 @@
             margin: -1px;
             border: solid 1px black;
             width: 33.33%;
-            height: 20%;
+            height: 25%;
             float: left;
             /*border: 1px solid black;*/
             text-align: center;
@@ -375,8 +388,21 @@
             word-wrap: break-word;
         }
 
-        .lobbyButton{
+        .lobbyJoin{
             position: relative;
+            width: 50%;
+            background-color: #212121;
+            transition: all .25s;
+            top: 50%;
+            outline: solid 1px black;
+            left: 25%;
+            color: white;
+            height: 20px;
+
+        }
+        .lobbyJoin:hover{
+          background-color: #262626;
+          cursor: pointer;
         }
 
         .lobbyPassword{
@@ -387,7 +413,7 @@
           position: relative;
           top: 10%;
           color: white;
-          fotn-size: 18px;
+          font-size: 18px;
         }
 
         #Welcome{
