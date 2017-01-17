@@ -73,7 +73,7 @@ function setup() {
 
 
     socket.on('joinLobby', function(data) {
-      console.log(data);
+        console.log(data);
         if (!data.isMainLobby) {
             console.log(data.currentDrawing);
             data.currentDrawing.forEach(function(e) {
@@ -83,11 +83,14 @@ function setup() {
                 //currentDrawing.show();
             });
         }
+        // data.players.push(me);
         me.currentLobby = data;
-        me.currentLobby.players.push(me)
+        // me.currentLobby.players[0].currentLobby = undefined
+        // me.currentLobby.players.me.currentLobby.players = undefined;
         removeLobbyList();
         removePlayerList();
         addToChat("You've joined " + data.name + "<br><br>");
+        addPlayerCard(me);
         players = data.players;
         players.forEach(function(e) {
             addPlayerCard(e);
@@ -303,7 +306,7 @@ function addLobby(l) {
     le.append('<div class="lobbyTitle">' + l.name + '</div>');
     le.append('<div class="lobbyJoin" id="' + l.id + '-join">Join!</div>');
     var join = $("#" + l.id + '-join');
-    join.click(function() {
+    join.off('click').on('click', function() {
         var json = {
             p: me.id,
             l: l.id,
@@ -590,8 +593,22 @@ function addPlayerCard(pl) {
         c.append('<div id="' + pl.id + '-score" class="playerScore">' + pl.score + '</div>');
     } else c.append('<div id="' + pl.id + '-name" class="playerEntry" style="width: 100%">' + pl.name + '</div>');
 
-    if (pl.id === me.id) c.css('background-color', 'rgba(0,0,0,0.2)');
-    else c.css('background-color', 'rgba(0,0,0,0)');
+    if (pl.id === me.id) {
+        c.css('background-color', 'rgba(0,0,0,0.2)');
+        if (!me.currentLobby.isMainLobby) c.css('cursor', 'pointer');
+        else {
+            c.css('cursor', 'default')
+        }
+        c.hover(function() {
+            if (!me.currentLobby.isMainLobby) $(this).css('background-color', 'rgba(255,0,0,.1)');
+        }, function() {
+            if (!me.currentLobby.isMainLobby) $(this).css('background-color', 'rgba(0,0,0,.2)');
+        });
+        c.off('click').on('click', leaveLobby);
+
+    } else c.css('background-color', 'rgba(0,0,0,0)');
+
+
     // sc.style('background-color', 'rgba(0,0,0,0)');
 }
 
@@ -601,6 +618,18 @@ function clearScores() {
     });
 }
 
+
+function leaveLobby() {
+    console.log('called')
+    if (!me.currentLobby.isMainLobby) {
+        var json = {
+            p: me.id,
+            l: 0,
+            leaving: me.currentLobby.id
+        };
+        socket.emit('joinLobbyAttempt', json);
+    }
+}
 
 function askForName() {
     nameInput = createInput('');
