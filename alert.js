@@ -22,12 +22,11 @@ function Alert(msg, bg, fg) {
     this.height = this.jq.height;
     // this.height = this.dom.heght;
     this.dom.style('top', -this.height + 'px');
-
     this.jq.animate({
         top: '2px'
         // top: 0
     }, 250, 'swing', function() {
-        console.log('entering page');
+        // console.log('entering page');
         // console.log(leavePage);
         // console.log(this.id);
         setTimeout(deleteElement, 4000, this.id);
@@ -43,10 +42,4 @@ function Alert(msg, bg, fg) {
             jq.remove();
         });
     }
-
-
-
-
-
-
 }

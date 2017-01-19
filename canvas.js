@@ -32,7 +32,7 @@ function setup() {
     undoButton = createDiv('Undo');
     undoButton.id('undoButton');
     undoButton.mouseClicked(function() {
-        console.log('undo pressed!');
+        // console.log('undo pressed!');
         socket.emit('undoDrawing', me.currentLobby.id);
     });
 
@@ -42,17 +42,17 @@ function setup() {
 
 
     // cc.touchStarted(function(){
-    //   console.log('touch triggered\n' + mouseX + " - " + mouseY);
+    //   // console.log('touch triggered\n' + mouseX + " - " + mouseY);
     //   // mousePressed();
     //   startDrawing();
     // });
     // cc.touchMoved(function(){
-    //   console.log('touch dragged\n' + mouseX + " - " + mouseY);
+    //   // console.log('touch dragged\n' + mouseX + " - " + mouseY);
     //   // mouseDragged();
     //   continueDrawing();
     // });
     // cc.touchEnded(function(){
-    //   console.log('touch released\n' + mouseX + " - " + mouseY);
+    //   // console.log('touch released\n' + mouseX + " - " + mouseY);
     //   // mouseReleased();
     //   endDrawing();
     // });
@@ -61,7 +61,7 @@ function setup() {
         background(150);
         stroke(2);
         fill(255);
-        console.log('connected');
+        // console.log('connected');
         $('#Welcome').html('')
         askForName();
         $('#chatHistory').html('');
@@ -70,12 +70,14 @@ function setup() {
         connected = true;
     });
 
+    // socket.on('updateLobbies')
+
 
 
     socket.on('joinLobby', function(data) {
-        console.log(data);
+        // console.log(data);
         if (!data.isMainLobby) {
-            console.log(data.currentDrawing);
+            // console.log(data.currentDrawing);
             data.currentDrawing.forEach(function(e) {
                 e.x = e.x * (width / e.w);
                 e.y = e.y * (height / e.h);
@@ -94,11 +96,11 @@ function setup() {
         players = data.players;
         players.forEach(function(e) {
             addPlayerCard(e);
-            console.log('does ' + e.id + ' match ' + me.id);
+            // console.log('does ' + e.id + ' match ' + me.id);
         })
         joinedLobby = true;
         // refreshPlayerList();
-        console.log('joined lobby');
+        // console.log('joined lobby');
 
         // players = data.players;
         // else {
@@ -106,12 +108,16 @@ function setup() {
         // }
     })
 
+    socket.on('updateLobbyInfo', function(data){
+      updateLobby(data);
+    })
+
     socket.on('allLobbyInfo', function(data) {
         createLobbyList(data);
     })
 
     socket.on('requestData', function(data) {
-        console.log(data);
+        // console.log(data);
     })
 
     socket.on('pushAlert', function(data) {
@@ -134,6 +140,10 @@ function setup() {
         }, 2000);
     });
 
+    socket.on('removeLobby', function(data){
+      removeLobby(data);
+    })
+
     socket.on('addPlayer', function(data) {
         players.push(data);
         new Alert(`<span style="font-weight: bold">` + data.name + "</span> has joined the game!")
@@ -153,6 +163,7 @@ function setup() {
     });
 
     socket.on('updateTimer', function(data) {
+      // console.log(data);
         timer.html(data);
     })
 
@@ -240,6 +251,7 @@ function setup() {
     socket.on('updateScoreboard', function(data) {
         var p = idPlayer(data.id);
         // console.log(data);
+        // console.log(p);
         p.score = data.score;
         p.correctlyGuessed = data.correctlyGuessed;
         updatePlayerCard(p);
@@ -261,7 +273,7 @@ function setup() {
     });
 
     socket.on('receiveData', function(a) {
-        console.log(a);
+        // console.log(a);
     });
 
 
@@ -292,11 +304,17 @@ function removeGuesses() {
 function createLobbyList(allLobbyInfo) {
     createDiv('').id('lobbySelectionContainer');
     var lCont = $('#lobbySelectionContainer');
-    console.log(allLobbyInfo);
+    // console.log(allLobbyInfo);
     allLobbyInfo.forEach(function(e) {
-        console.log(e);
+        // console.log(e);
         addLobby(e);
     });
+}
+
+function updateLobby(l){
+  var le = $('#'+l.id+"-count");
+  var counterText = (l.playerLimit === 999) ? (l.playerCount + " players" ) : (l.playerCount + "/"+ l.playerLimit + " players");
+  le.html(counterText);
 }
 
 function addLobby(l) {
@@ -305,6 +323,8 @@ function addLobby(l) {
     var le = $('#lobby-' + l.id);
     le.append('<div class="lobbyTitle">' + l.name + '</div>');
     le.append('<div class="lobbyJoin" id="' + l.id + '-join">Join!</div>');
+    var counterText = (l.playerLimit === 999) ? (l.playerCount + " players" ) : (l.playerCount + "/"+ l.playerLimit + " players");
+    le.append('<div class="lobbySize" id="' + l.id + '-count">'+counterText+'</div>');
     var join = $("#" + l.id + '-join');
     join.off('click').on('click', function() {
         var json = {
@@ -312,7 +332,7 @@ function addLobby(l) {
             l: l.id,
             leaving: me.currentLobby.id
         };
-        console.log('attempting to join ' + l.name);
+        // console.log('attempting to join ' + l.name);
         socket.emit('joinLobbyAttempt', json);
     });
 }
@@ -320,6 +340,7 @@ function addLobby(l) {
 
 function removeLobby(l) {
     var e = $('#lobby-' + l.id);
+    // console.log('removing lobby ' + l.name);
     var animTime = 2
     e.css('animation-name', 'fadeOut');
     e.css('animation-iteration-count', '1');
@@ -391,7 +412,7 @@ function readdUndo() {
 function undoDrawing() {
     // console.log(currentDrawing.drawing.length);
     for (var i = currentDrawing.drawing.length - 1; i >= 0; i--) {
-        console.log('looking for beginning at latest ' + i);
+        // console.log('looking for beginning at latest ' + i);
         if (currentDrawing.drawing[i].begin) {
             // console.log(i);
             // console.log(j);
@@ -445,6 +466,8 @@ function startDrawing() {
 }
 
 function idPlayer(playerID) {
+    // console.log(playerID + ' matches ' + me.id + "?");
+    if (playerID === me.id) return me;
     for (var i = 0; i < players.length; i++) {
         if (playerID === players[i].id) {
             return players[i];
@@ -470,7 +493,7 @@ function continueDrawing() {
             // id: me.id,
             lobby: me.currentLobby.id
         }
-        console.log('i am drawnig is all the drawing data');
+        // console.log('i am drawnig is all the drawing data');
         currentDrawing.addPoint(json);
         socket.emit('addToDrawing', json);
         // currentDrawing.show();
@@ -585,7 +608,7 @@ function addPlayerCard(pl) {
     var list = $('#playerList');
     list.append('<div id="' + pl.id + '" class="playerContainer"></div>');
     var c = $('#' + pl.id);
-    console.log(c);
+    // console.log(c);
     // var p = $('#'+pl.id+'-name');
 
     if (!me.currentLobby.isMainLobby) {
@@ -620,7 +643,7 @@ function clearScores() {
 
 
 function leaveLobby() {
-    console.log('called')
+    // console.log('called')
     if (!me.currentLobby.isMainLobby) {
         var json = {
             p: me.id,
