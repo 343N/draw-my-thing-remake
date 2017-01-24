@@ -277,6 +277,7 @@ function setup() {
     socket.on('correctGuess', function(data) {
         // addToChat('<span style="font-weight: bold">Correct! The word was ' + data + "!</span><br><br>");
         new Alert('Correct! The word was <span style="font-weight: bold">' + data + '</span>!');
+        showWord(data);
         me.correctlyGuessed = true;
 
         // updatePlayerList();
