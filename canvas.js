@@ -76,6 +76,7 @@ function setup() {
 
     socket.on('joinLobby', function(data) {
         // console.log(data);
+        clearDrawing();
         if (!data.isMainLobby) {
             // console.log(data.currentDrawing);
             data.currentDrawing.forEach(function(e) {
@@ -89,6 +90,8 @@ function setup() {
         me.currentLobby = data;
         // me.currentLobby.players[0].currentLobby = undefined
         // me.currentLobby.players.me.currentLobby.players = undefined;
+        if (me.currentLobby.currentWord) showWord(me.currentLobby.currentWord);
+        else showWord('');
         removeLobbyList();
         removePlayerList();
         addToChat("You've joined " + data.name + "<br><br>");
@@ -108,13 +111,17 @@ function setup() {
         // }
     })
 
-    socket.on('updateLobbyInfo', function(data){
-      updateLobby(data);
+    socket.on('updateLobbyInfo', function(data) {
+        updateLobby(data);
     })
 
     socket.on('allLobbyInfo', function(data) {
         createLobbyList(data);
-    })
+    });
+
+    socket.on('addLobbyToList', function(data) {
+        addLobby(data);
+    });
 
     socket.on('requestData', function(data) {
         // console.log(data);
@@ -124,6 +131,10 @@ function setup() {
         new Alert(data.msg, data.bg, data.fg)
     });
 
+    socket.on('closePopups', function() {
+        $('.popupOverlay').trigger('click');
+    })
+
     socket.on('disconnect', function(data) {
         players = [];
         connected = false;
@@ -131,6 +142,7 @@ function setup() {
         nameInput.remove();
         // joinedLobby = false;
         currentDrawing.clear();
+        $('.popupOverlay').trigger('click');
         $('#Welcome').css('background-color', '#212121');
         $('#Welcome').html('Connecting...')
         $('#Welcome').css('z-index', '2');
@@ -140,8 +152,8 @@ function setup() {
         }, 2000);
     });
 
-    socket.on('removeLobby', function(data){
-      removeLobby(data);
+    socket.on('removeLobby', function(data) {
+        removeLobby(data);
     })
 
     socket.on('addPlayer', function(data) {
@@ -163,7 +175,7 @@ function setup() {
     });
 
     socket.on('updateTimer', function(data) {
-      // console.log(data);
+        // console.log(data);
         timer.html(data);
     })
 
@@ -213,6 +225,7 @@ function setup() {
         } else canvas.style.cursor = "default";
         players.forEach(function(e) {
             if (e.id == data.id) {
+                if (data.id == me.id) me.isDrawing = true;
                 e.isDrawing = true;
             } else {
                 e.isDrawing = false;
@@ -239,6 +252,25 @@ function setup() {
         addToChat(data);
 
     });
+
+    socket.on('requestPassword', function(data) {
+        console.log(data);
+        data.popup.button.click = function() {
+            console.log('logging');
+            var el = "#" + this.id.substr(0, this.id.length - 1) + '1';
+            var json = {
+                l: data.l,
+                password: $(el).val()
+            }
+            // var json = {
+            // }
+            // socket.emit('createNewLobby', json);
+            socket.emit('passwordAttempt', json);
+            console.log($(el).val());
+
+        }
+        new Popup(data.popup);
+    })
 
     socket.on('correctGuess', function(data) {
         // addToChat('<span style="font-weight: bold">Correct! The word was ' + data + "!</span><br><br>");
@@ -304,6 +336,10 @@ function removeGuesses() {
 function createLobbyList(allLobbyInfo) {
     createDiv('').id('lobbySelectionContainer');
     var lCont = $('#lobbySelectionContainer');
+    lCont.css('height', height);
+    $("#wordDiv").append(`<div id="createLobbyButton">Create Lobby</div>`)
+    console.log(newLobbyPopup);
+    $('#createLobbyButton').off('click').on('click', newLobbyPopup);
     // console.log(allLobbyInfo);
     allLobbyInfo.forEach(function(e) {
         // console.log(e);
@@ -311,20 +347,141 @@ function createLobbyList(allLobbyInfo) {
     });
 }
 
-function updateLobby(l){
-  var le = $('#'+l.id+"-count");
-  var counterText = (l.playerLimit === 999) ? (l.playerCount + " players" ) : (l.playerCount + "/"+ l.playerLimit + " players");
-  le.html(counterText);
+function newLobbyPopup() {
+    var popupData = {
+        title: {
+            text: "Create a new lobby.",
+            properties: {
+                color: 'white',
+                'font-size': '36px'
+            }
+        },
+        desc: {
+            text: "You can create your own lobby!<br>Specify the name, password (optional), and the player limit!",
+            properties: {
+                color: 'rgba(200,200,200,1)',
+                'font-size': '16px',
+                'margin-bottom': '24px'
+            }
+        },
+        "input-1": {
+            label: {
+                text: "Lobby Name",
+                properties: {
+                    'color': 'white',
+                    'margin-top': '8px',
+                    'margin-bottom': '0px',
+                    'font-size': '14px',
+                    'margin-left': '5%'
+                }
+            },
+            properties: {
+                color: 'white',
+                'background-color': '#212121',
+                'width': '80%',
+                'height': 'auto',
+                'position': 'relative',
+                'padding-left': '5%',
+                'padding-right': '5%',
+                'left': '5%'
+            }
+        },
+        "input-2": {
+            label: {
+                text: "Password (optional)",
+                properties: {
+                    'color': 'white',
+                    'margin-top': '8px',
+                    'margin-bottom': '0px',
+                    'font-size': '14px',
+                    'margin-left': '5%'
+                }
+            },
+            properties: {
+                color: 'white',
+                'background-color': '#212121',
+                'padding-left': '5%',
+                'width': '80%',
+                'height': 'auto',
+                'position': 'relative',
+                'padding-left': '5%',
+                'padding-right': '5%',
+                'left': '5%'
+            }
+        },
+        "numberInput-3": {
+            label: {
+                text: "Player Limit",
+                properties: {
+                    'color': 'white',
+                    'margin-top': '8px',
+                    'margin-bottom': '0px',
+                    'font-size': '14px',
+                    'margin-left': '5%'
+                }
+            },
+            properties: {
+                color: 'white',
+                'background-color': '#212121',
+                'padding-left': '5%',
+                'width': '80%',
+                'height': 'auto',
+                'position': 'relative',
+                'padding-left': '5%',
+                'padding-right': '5%',
+                'margin-bottom': '8px',
+                'left': '5%'
+            }
+        },
+        "button-4": {
+            text: "Create Lobby",
+            properties: {
+                color: 'white',
+                'background-color': 'rgba(0,60,0,.5)',
+                // 'padding-left': '5%',
+                'width': '90%',
+                'height': 'auto',
+                'position': 'relative',
+                // 'padding-left': '10%',
+                // 'padding-right': '10%',
+                'left': '5%'
+            },
+            click: function() {
+                var s = this.id.substr(0, this.id.length - 1);
+                console.log(s);
+                console.log($('#' + s + "1").val());
+                console.log($('#' + s + "2").val());
+                console.log($('#' + s + "3").val());
+                var json = {
+                    name: $('#' + s + "1").val(),
+                    password: $('#' + s + "2").val(),
+                    limit: $('#' + s + "3").val()
+                }
+                socket.emit('createNewLobby', json);
+            }
+        }
+    }
+    console.log(popupData);
+    new Popup(popupData);
+}
+
+function updateLobby(l) {
+    var le = $('#' + l.id + "-count");
+    var counterText = (l.playerLimit >= 999) ? (l.playerCount + " players") : (l.playerCount + "/" + l.playerLimit + " players");
+
+    le.html(counterText);
 }
 
 function addLobby(l) {
     var lCont = $('#lobbySelectionContainer');
     lCont.append('<div id="lobby-' + l.id + '" class="lobbyContainer"></div>')
     var le = $('#lobby-' + l.id);
+    if (l.passworded) le.css('background-color', 'rgba(66,66,77,1)');
     le.append('<div class="lobbyTitle">' + l.name + '</div>');
     le.append('<div class="lobbyJoin" id="' + l.id + '-join">Join!</div>');
-    var counterText = (l.playerLimit === 999) ? (l.playerCount + " players" ) : (l.playerCount + "/"+ l.playerLimit + " players");
-    le.append('<div class="lobbySize" id="' + l.id + '-count">'+counterText+'</div>');
+    var counterText = (l.playerLimit >= 999) ? (l.playerCount + " players") : (l.playerCount + "/" + l.playerLimit + " players");
+    console.log(l.playerLimit);
+    le.append('<div class="lobbySize" id="' + l.id + '-count">' + counterText + '</div>');
     var join = $("#" + l.id + '-join');
     join.off('click').on('click', function() {
         var json = {
@@ -341,7 +498,7 @@ function addLobby(l) {
 function removeLobby(l) {
     var e = $('#lobby-' + l.id);
     // console.log('removing lobby ' + l.name);
-    var animTime = 2
+    var animTime = 1
     e.css('animation-name', 'fadeOut');
     e.css('animation-iteration-count', '1');
     e.css('animation-duration', animTime + 's');
@@ -354,6 +511,7 @@ function removeLobby(l) {
 
 function removeLobbyList() {
     $('#lobbySelectionContainer').remove();
+    $('#createLobbyButton').remove();
 }
 
 function mousePressed() {
