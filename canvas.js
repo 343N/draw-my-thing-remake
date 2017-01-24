@@ -182,6 +182,7 @@ function setup() {
     socket.on('guesserWord', function(data) {
         new Alert(`Round ` + data.count + `!<br>Your word to guess is <span style="font-weight: bold;">` + data.length + "</span> letters long", "#B71C1C");
         addToChat(`Round ` + data.count + `!<span style="color: rgba(255,128,128,1)"><br>Your word to guess is <span style="font-weight: bold;">` + data.length + "</span> letters long<BR><BR></span>")
+        me.isDrawing = false;
         showWord(data.length);
         removeGuesses();
         removeUndo();
@@ -190,6 +191,7 @@ function setup() {
     socket.on('drawerWord', function(data) {
         new Alert(`Round ` + data.count + `!<br>Your word to draw is <span style="font-weight: bold;">` + data.word + ".</span>", "#1B5E20");
         addToChat(`Round ` + data.count + `!<span style="color: rgba(128,255,128,1)"><br>Your word to draw is <span style="font-weight: bold;">` + data.word + ".</span><BR><BR></span>");
+        me.isDrawing = true;
         showWord(data.word);
         removeGuesses();
     })
@@ -284,9 +286,15 @@ function setup() {
         var p = idPlayer(data.id);
         // console.log(data);
         // console.log(p);
-        p.score = data.score;
-        p.correctlyGuessed = data.correctlyGuessed;
-        updatePlayerCard(p);
+        if (p.id == me.id){
+          me.correctlyGuessed = data.correctlyGuessed;
+          me.score = data.score;
+          updatePlayerCard(me);
+        } else {
+          p.score = data.score;
+          p.correctlyGuessed = data.correctlyGuessed;
+          updatePlayerCard(p);
+        }
     });
 
 
@@ -322,11 +330,13 @@ function clearDrawing() {
 }
 
 function removeGuesses() {
+    me.correctlyGuessed = false;
     players.forEach(function(e) {
         e.correctlyGuessed = false;
         updatePlayerCard(e);
+        updatePlayerCard(me);
     });
-    me.correctlyGuessed = false;
+
 }
 
 //
@@ -745,7 +755,7 @@ function removePlayerCard(p) {
 
 function updatePlayerCard(pl) {
     var p = pl;
-    var card = $('' + p.id);
+    var card = $('#' + p.id);
     // var sc = $('#' + p.id + '-score');
     // var name = $('#' + p.id + '-name');
     if (p.isDrawing) {
@@ -788,6 +798,10 @@ function addPlayerCard(pl) {
         c.off('click').on('click', leaveLobby);
 
     } else c.css('background-color', 'rgba(0,0,0,0)');
+
+    if (pl.isDrawing){
+      c.css('background-color', 'rgba(0,0,96,.3)');
+    } else if (pl.correctGuessed) c.css('background-color', 'rgba(0,96,0,.3)');
 
 
     // sc.style('background-color', 'rgba(0,0,0,0)');
@@ -838,6 +852,12 @@ function askForName() {
 // function touchEnded(){
 //   return false;
 // }
+
+function updateAllPlayerCards(){
+  players.forEach(function(e){
+    updatePlayerCard(e);
+  })
+}
 
 function draw() {
 
