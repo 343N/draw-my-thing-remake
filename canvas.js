@@ -811,6 +811,7 @@ function clearScores() {
     players.forEach(function(e) {
         e.score = 0;
     });
+    me.score = 0;
 }
 
 
